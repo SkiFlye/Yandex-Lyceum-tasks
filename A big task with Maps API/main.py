@@ -18,6 +18,8 @@ class GameView(arcade.Window):
         super().__init__(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
         self.lon = 133.7751
         self.lat = -25.2744
+        self.marker_lon = self.lon
+        self.marker_lat = self.lat
         self.zoom = 5
         self.zoom_step = 1
         self.move_step = 1
@@ -48,7 +50,7 @@ class GameView(arcade.Window):
             "z": self.zoom,
             "l": "map",
             "apikey": API_KEY}
-        params["pt"] = f"{self.lon},{self.lat},pm2rdl"
+        params["pt"] = f"{self.marker_lon},{self.marker_lat},pm2rdl"
         if self.dark_theme:
             params["theme"] = "dark"
         response = requests.get(SERVER_ADDRESS, params=params)
@@ -85,6 +87,7 @@ class GameView(arcade.Window):
         toponym = found_objects[0]["GeoObject"]
         pos = toponym["Point"]["pos"]
         self.lon, self.lat = map(float, pos.split())
+        self.marker_lon, self.marker_lat = self.lon, self.lat
         self.update_map()
 
     def on_draw(self):
