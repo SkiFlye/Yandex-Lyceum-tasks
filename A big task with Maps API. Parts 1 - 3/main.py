@@ -8,7 +8,7 @@ WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Карта"
 MAP_FILE = "map.png"
 API_KEY = 'f3a0fe3a-b07e-4840-a1da-06f18b2ddf13'
-SERVER_ADDRESS = 'https://static-maps.yandex.ru/v1?'
+SERVER_ADDRESS = 'https://static-maps.yandex.ru/1.x/'
 
 
 class GameView(arcade.Window):
@@ -16,11 +16,11 @@ class GameView(arcade.Window):
         super().__init__(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE)
         self.lon = 133.7751
         self.lat = -25.2744
-        self.zoom = 55
-        self.zoom_step = 5
-        self.move_step = 1.0
+        self.zoom = 5
+        self.zoom_step = 1
+        self.move_step = 1
         self.zoom_min = 1
-        self.zoom_max = 90
+        self.zoom_max = 20
         self.lon_min = -180
         self.lon_max = 180
         self.lat_min = -90
@@ -32,12 +32,14 @@ class GameView(arcade.Window):
         self.get_image()
 
     def get_image(self):
-        ll_spn = f'll={self.lon},{self.lat}&spn={self.zoom},{self.zoom}'
-        map_request = f"{SERVER_ADDRESS}{ll_spn}&apikey={API_KEY}"
-        response = requests.get(map_request)
+        params = {
+            "ll": f"{self.lon},{self.lat}",
+            "z": self.zoom,
+            "l": "map",
+            "apikey": API_KEY}
+        response = requests.get(SERVER_ADDRESS, params=params)
         if not response:
             print("Ошибка выполнения запроса:")
-            print(map_request)
             print("Http статус:", response.status_code, "(", response.reason, ")")
             sys.exit(1)
         with open(MAP_FILE, "wb") as file:
@@ -57,38 +59,36 @@ class GameView(arcade.Window):
                     (self.height - self.background.height) // 2,
                     self.background.width,
                     self.background.height))
+        arcade.draw_text("Стрелки - движение, PgUp/PgDn - масштаб",
+                         self.width // 2, 10,
+                         arcade.color.WHITE, 10,
+                         anchor_x="center")
 
     def on_key_press(self, key, modifiers):
         updated = False
         if key == arcade.key.PAGEUP:
-            new_zoom = self.zoom - self.zoom_step
-            if new_zoom >= self.zoom_min:
-                self.zoom = new_zoom
+            if self.zoom < self.zoom_max:
+                self.zoom += self.zoom_step
                 updated = True
         elif key == arcade.key.PAGEDOWN:
-            new_zoom = self.zoom + self.zoom_step
-            if new_zoom < self.zoom_max:
-                self.zoom = new_zoom
+            if self.zoom > self.zoom_min:
+                self.zoom -= self.zoom_step
                 updated = True
         elif key == arcade.key.UP:
-            new_lat = self.lat + self.move_step
-            if new_lat < self.lat_max:
-                self.lat = new_lat
+            if self.lat + self.move_step <= self.lat_max:
+                self.lat += self.move_step
                 updated = True
         elif key == arcade.key.DOWN:
-            new_lat = self.lat - self.move_step
-            if new_lat >= self.lat_min:
-                self.lat = new_lat
+            if self.lat - self.move_step >= self.lat_min:
+                self.lat -= self.move_step
                 updated = True
         elif key == arcade.key.LEFT:
-            new_lon = self.lon - self.move_step
-            if new_lon >= self.lon_min:
-                self.lon = new_lon
+            if self.lon - self.move_step >= self.lon_min:
+                self.lon -= self.move_step
                 updated = True
         elif key == arcade.key.RIGHT:
-            new_lon = self.lon + self.move_step
-            if new_lon <= self.lon_max:
-                self.lon = new_lon
+            if self.lon + self.move_step <= self.lon_max:
+                self.lon += self.move_step
                 updated = True
         if updated:
             self.update_map()
