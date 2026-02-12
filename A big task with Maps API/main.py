@@ -5,7 +5,7 @@ import arcade
 from arcade.gui import UIManager, UIInputText, UITextArea, UIFlatButton, UIBoxLayout
 
 WINDOW_WIDTH = 600
-WINDOW_HEIGHT = 600
+WINDOW_HEIGHT = 650
 WINDOW_TITLE = "Карта"
 MAP_FILE = "map.png"
 API_KEY = 'f3a0fe3a-b07e-4840-a1da-06f18b2ddf13'
@@ -31,14 +31,18 @@ class GameView(arcade.Window):
         self.lat_max = 90
         self.background = None
         self.dark_theme = False
+        self.object_address = ""
         self.manager = UIManager()
         self.manager.enable()
-        self.box_layout = UIBoxLayout(x=100, y=550, vertical=False, space_between=10)
+
+        self.box_layout = UIBoxLayout(x=100, y=600, vertical=False, space_between=10)
+
         self.input_text = UIInputText(
             width=300, height=30,
             text_color=(255, 255, 255, 255),
             font_size=14)
         self.box_layout.add(self.input_text)
+
         self.reset_button = UIFlatButton(
             text="Сброс результата",
             width=150,
@@ -46,6 +50,7 @@ class GameView(arcade.Window):
             color=arcade.color.DARK_RED)
         self.reset_button.on_click = self.on_reset_click
         self.box_layout.add(self.reset_button)
+
         self.manager.add(self.box_layout)
         self.setup()
 
@@ -53,6 +58,7 @@ class GameView(arcade.Window):
         self.marker_lon = None
         self.marker_lat = None
         self.input_text.text = ""
+        self.object_address = ""
         self.update_map()
 
     def setup(self):
@@ -103,6 +109,7 @@ class GameView(arcade.Window):
         pos = toponym["Point"]["pos"]
         self.lon, self.lat = map(float, pos.split())
         self.marker_lon, self.marker_lat = self.lon, self.lat
+        self.object_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
         self.update_map()
 
     def on_draw(self):
@@ -125,9 +132,21 @@ class GameView(arcade.Window):
                          arcade.color.WHITE, 10,
                          anchor_x="center")
         arcade.draw_text("Enter - поиск",
-                         10, 570,
+                         10, 620,
                          arcade.color.WHITE, 12,
                          anchor_x="left")
+        arcade.draw_rect_filled(arcade.rect.XYWH(300, 570, 580, 30), arcade.color.GRAY)
+        arcade.draw_rect_outline(arcade.rect.XYWH(300, 570, 580, 30), arcade.color.WHITE, 2)
+        if self.object_address:
+            arcade.draw_text(f"Адрес: {self.object_address}",
+                             20, 565,
+                             arcade.color.BLACK, 12,
+                             anchor_x="left")
+        else:
+            arcade.draw_text("Адрес: не найден",
+                             20, 565,
+                             arcade.color.BLACK, 12,
+                             anchor_x="left")
 
     def on_key_press(self, key, modifiers):
         updated = False
