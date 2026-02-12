@@ -2,7 +2,7 @@ import os
 import sys
 import requests
 import arcade
-from arcade.gui import UIManager, UIInputText, UITextArea
+from arcade.gui import UIManager, UIInputText, UITextArea, UIFlatButton, UIBoxLayout
 
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 600
@@ -33,13 +33,27 @@ class GameView(arcade.Window):
         self.dark_theme = False
         self.manager = UIManager()
         self.manager.enable()
+        self.box_layout = UIBoxLayout(x=100, y=550, vertical=False, space_between=10)
         self.input_text = UIInputText(
-            x=100, y=550,
-            width=400, height=30,
+            width=300, height=30,
             text_color=(255, 255, 255, 255),
             font_size=14)
-        self.manager.add(self.input_text)
+        self.box_layout.add(self.input_text)
+        self.reset_button = UIFlatButton(
+            text="Сброс результата",
+            width=150,
+            height=30,
+            color=arcade.color.DARK_RED)
+        self.reset_button.on_click = self.on_reset_click
+        self.box_layout.add(self.reset_button)
+        self.manager.add(self.box_layout)
         self.setup()
+
+    def on_reset_click(self, event):
+        self.marker_lon = None
+        self.marker_lat = None
+        self.input_text.text = ""
+        self.update_map()
 
     def setup(self):
         self.get_image()
@@ -50,7 +64,8 @@ class GameView(arcade.Window):
             "z": self.zoom,
             "l": "map",
             "apikey": API_KEY}
-        params["pt"] = f"{self.marker_lon},{self.marker_lat},pm2rdl"
+        if self.marker_lon is not None and self.marker_lat is not None:
+            params["pt"] = f"{self.marker_lon},{self.marker_lat},pm2rdl"
         if self.dark_theme:
             params["theme"] = "dark"
         response = requests.get(SERVER_ADDRESS, params=params)
