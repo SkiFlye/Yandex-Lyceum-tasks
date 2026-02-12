@@ -34,7 +34,7 @@ class GameView(arcade.Window):
         self.object_address = ""
         self.object_address_without_index = ""
         self.object_postal_code = ""
-        self.show_postal_code = False
+        self.selected_option = "Выключить индекс"
         self.manager = UIManager()
         self.manager.enable()
         self.box_layout = UIBoxLayout(x=100, y=650, vertical=False, space_between=10)
@@ -55,17 +55,23 @@ class GameView(arcade.Window):
             width=150,
             height=30)
         self.postal_dropdown.on_change = self.on_postal_change
+        self.postal_dropdown.selected = "Выключить индекс"
         self.box_layout.add(self.postal_dropdown)
         self.manager.add(self.box_layout)
         self.setup()
 
     def on_postal_change(self, value):
-        self.show_postal_code = (value == "Включить индекс")
+        self.selected_option = value.new_value
+        self.update_address_display()
+
+    def update_address_display(self):
         if self.object_address_without_index:
-            if self.show_postal_code and self.object_postal_code:
+            if self.selected_option == "Включить индекс" and self.object_postal_code:
                 self.object_address = f"{self.object_address_without_index}, {self.object_postal_code}"
             else:
                 self.object_address = self.object_address_without_index
+        else:
+            self.object_address = ""
 
     def on_reset_click(self, event):
         self.marker_lon = None
@@ -74,6 +80,8 @@ class GameView(arcade.Window):
         self.object_address = ""
         self.object_address_without_index = ""
         self.object_postal_code = ""
+        self.selected_option = "Выключить индекс"
+        self.postal_dropdown.selected = "Выключить индекс"
         self.update_map()
 
     def setup(self):
@@ -112,7 +120,6 @@ class GameView(arcade.Window):
                 geocoder_meta = toponym["metaDataProperty"]["GeocoderMetaData"]
                 if "Address" in geocoder_meta and "postal_code" in geocoder_meta["Address"]:
                     return geocoder_meta["Address"]["postal_code"]
-
             pos = toponym["Point"]["pos"]
             lon, lat = pos.split()
             postal_request = f"http://geocode-maps.yandex.ru/1.x/?apikey={GEOCODER_API_KEY}&geocode={lon},{lat}&format=json&kind=house"
@@ -149,10 +156,7 @@ class GameView(arcade.Window):
         self.marker_lon, self.marker_lat = self.lon, self.lat
         self.object_address_without_index = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
         self.object_postal_code = self.get_postal_code(toponym)
-        if not self.show_postal_code and self.object_postal_code:
-            self.object_address = f"{self.object_address_without_index}, {self.object_postal_code}"
-        else:
-            self.object_address = self.object_address_without_index
+        self.update_address_display()
         self.update_map()
 
     def on_draw(self):
