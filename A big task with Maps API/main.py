@@ -2,10 +2,10 @@ import os
 import sys
 import requests
 import arcade
-from arcade.gui import UIManager, UIInputText, UITextArea, UIFlatButton, UIBoxLayout
+from arcade.gui import UIManager, UIInputText, UITextArea, UIFlatButton, UIBoxLayout, UIDropdown
 
 WINDOW_WIDTH = 600
-WINDOW_HEIGHT = 650
+WINDOW_HEIGHT = 700
 WINDOW_TITLE = "Карта"
 MAP_FILE = "map.png"
 API_KEY = 'f3a0fe3a-b07e-4840-a1da-06f18b2ddf13'
@@ -32,33 +32,48 @@ class GameView(arcade.Window):
         self.background = None
         self.dark_theme = False
         self.object_address = ""
+        self.object_address_without_index = ""
+        self.object_postal_code = ""
+        self.show_postal_code = False
         self.manager = UIManager()
         self.manager.enable()
-
-        self.box_layout = UIBoxLayout(x=100, y=600, vertical=False, space_between=10)
-
+        self.box_layout = UIBoxLayout(x=100, y=650, vertical=False, space_between=10)
         self.input_text = UIInputText(
-            width=300, height=30,
+            width=200, height=30,
             text_color=(255, 255, 255, 255),
             font_size=14)
         self.box_layout.add(self.input_text)
-
         self.reset_button = UIFlatButton(
-            text="Сброс результата",
-            width=150,
+            text="Сброс",
+            width=100,
             height=30,
             color=arcade.color.DARK_RED)
         self.reset_button.on_click = self.on_reset_click
         self.box_layout.add(self.reset_button)
-
+        self.postal_dropdown = UIDropdown(
+            options=["Выключить индекс", "Включить индекс"],
+            width=150,
+            height=30)
+        self.postal_dropdown.on_change = self.on_postal_change
+        self.box_layout.add(self.postal_dropdown)
         self.manager.add(self.box_layout)
         self.setup()
+
+    def on_postal_change(self, value):
+        self.show_postal_code = (value == "Включить индекс")
+        if self.object_address_without_index:
+            if self.show_postal_code and self.object_postal_code:
+                self.object_address = f"{self.object_address_without_index}, {self.object_postal_code}"
+            else:
+                self.object_address = self.object_address_without_index
 
     def on_reset_click(self, event):
         self.marker_lon = None
         self.marker_lat = None
         self.input_text.text = ""
         self.object_address = ""
+        self.object_address_without_index = ""
+        self.object_postal_code = ""
         self.update_map()
 
     def setup(self):
@@ -91,6 +106,29 @@ class GameView(arcade.Window):
         self.dark_theme = not self.dark_theme
         self.update_map()
 
+    def get_postal_code(self, toponym):
+        try:
+            if "metaDataProperty" in toponym and "GeocoderMetaData" in toponym["metaDataProperty"]:
+                geocoder_meta = toponym["metaDataProperty"]["GeocoderMetaData"]
+                if "Address" in geocoder_meta and "postal_code" in geocoder_meta["Address"]:
+                    return geocoder_meta["Address"]["postal_code"]
+
+            pos = toponym["Point"]["pos"]
+            lon, lat = pos.split()
+            postal_request = f"http://geocode-maps.yandex.ru/1.x/?apikey={GEOCODER_API_KEY}&geocode={lon},{lat}&format=json&kind=house"
+            response = requests.get(postal_request)
+            if response:
+                json_response = response.json()
+                if json_response["response"]["GeoObjectCollection"]["featureMember"]:
+                    obj = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                    if "metaDataProperty" in obj and "GeocoderMetaData" in obj["metaDataProperty"]:
+                        if "Address" in obj["metaDataProperty"]["GeocoderMetaData"]:
+                            if "postal_code" in obj["metaDataProperty"]["GeocoderMetaData"]["Address"]:
+                                return obj["metaDataProperty"]["GeocoderMetaData"]["Address"]["postal_code"]
+        except:
+            pass
+        return ""
+
     def search_object(self):
         search_text = self.input_text.text.strip()
         if not search_text:
@@ -109,7 +147,12 @@ class GameView(arcade.Window):
         pos = toponym["Point"]["pos"]
         self.lon, self.lat = map(float, pos.split())
         self.marker_lon, self.marker_lat = self.lon, self.lat
-        self.object_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+        self.object_address_without_index = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+        self.object_postal_code = self.get_postal_code(toponym)
+        if not self.show_postal_code and self.object_postal_code:
+            self.object_address = f"{self.object_address_without_index}, {self.object_postal_code}"
+        else:
+            self.object_address = self.object_address_without_index
         self.update_map()
 
     def on_draw(self):
@@ -122,6 +165,18 @@ class GameView(arcade.Window):
                     (self.height - self.background.height) // 2,
                     self.background.width,
                     self.background.height))
+        arcade.draw_rect_filled(arcade.rect.XYWH(300, 620, 580, 30), arcade.color.GRAY)
+        arcade.draw_rect_outline(arcade.rect.XYWH(300, 620, 580, 30), arcade.color.WHITE, 2)
+        if self.object_address:
+            arcade.draw_text(f"Адрес: {self.object_address}",
+                             20, 615,
+                             arcade.color.BLACK, 12,
+                             anchor_x="left")
+        else:
+            arcade.draw_text("Адрес: не найден",
+                             20, 615,
+                             arcade.color.BLACK, 12,
+                             anchor_x="left")
         self.manager.draw()
         arcade.draw_text("Tab - Сменить тему",
                          10, 30,
@@ -132,21 +187,9 @@ class GameView(arcade.Window):
                          arcade.color.WHITE, 10,
                          anchor_x="center")
         arcade.draw_text("Enter - поиск",
-                         10, 620,
+                         10, 670,
                          arcade.color.WHITE, 12,
                          anchor_x="left")
-        arcade.draw_rect_filled(arcade.rect.XYWH(300, 570, 580, 30), arcade.color.GRAY)
-        arcade.draw_rect_outline(arcade.rect.XYWH(300, 570, 580, 30), arcade.color.WHITE, 2)
-        if self.object_address:
-            arcade.draw_text(f"Адрес: {self.object_address}",
-                             20, 565,
-                             arcade.color.BLACK, 12,
-                             anchor_x="left")
-        else:
-            arcade.draw_text("Адрес: не найден",
-                             20, 565,
-                             arcade.color.BLACK, 12,
-                             anchor_x="left")
 
     def on_key_press(self, key, modifiers):
         updated = False
