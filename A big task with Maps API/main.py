@@ -2,6 +2,7 @@ import os
 import sys
 import requests
 import arcade
+import math
 from arcade.gui import UIManager, UIInputText, UITextArea, UIFlatButton, UIBoxLayout, UIDropdown
 
 WINDOW_WIDTH = 600
@@ -22,7 +23,6 @@ class GameView(arcade.Window):
         self.marker_lat = self.lat
         self.zoom = 5
         self.zoom_step = 1
-        self.move_step = 1
         self.zoom_min = 1
         self.zoom_max = 20
         self.lon_min = -180
@@ -194,6 +194,50 @@ class GameView(arcade.Window):
         self.update_address_display()
         self.update_map()
 
+    def search_organization_by_coordinates(self, lon, lat):
+        search_api_server = "https://search-maps.yandex.ru/v1/"
+        api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
+        search_params = {
+            "apikey": api_key,
+            "text": "организация",
+            "lang": "ru_RU",
+            "ll": f"{lon},{lat}",
+            "type": "biz",
+            "results": 1
+        }
+        response = requests.get(search_api_server, params=search_params)
+        if not response:
+            return None
+        json_response = response.json()
+        if not json_response.get("features"):
+            return None
+
+        organization = json_response["features"][0]
+        org_coords = organization["geometry"]["coordinates"]
+        org_lon, org_lat = org_coords
+
+        lat_mid = (lat + org_lat) / 2
+        lat_km_per_degree = 111.0
+        lon_km_per_degree = 111.0 * math.cos(math.radians(lat_mid))
+        lat_diff_km = (org_lat - lat) * lat_km_per_degree
+        lon_diff_km = (org_lon - lon) * lon_km_per_degree
+        distance_m = math.sqrt(lat_diff_km ** 2 + lon_diff_km ** 2) * 1000
+
+        if distance_m > 50:
+            return None
+
+        org_name = organization["properties"]["CompanyMetaData"]["name"]
+        org_address = organization["properties"]["CompanyMetaData"]["address"]
+        hours = organization["properties"]["CompanyMetaData"].get("Hours", {}).get("text", "Время работы не указано")
+
+        return {
+            "name": org_name,
+            "address": org_address,
+            "hours": hours,
+            "distance": distance_m,
+            "coordinates": (org_lon, org_lat)
+        }
+
     def on_draw(self):
         self.clear()
         if self.background:
@@ -232,6 +276,8 @@ class GameView(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         updated = False
+        move_amount = 0.5 / (2 ** self.zoom)
+
         if key == arcade.key.TAB:
             self.toggle_dark_theme()
             updated = True
@@ -247,21 +293,18 @@ class GameView(arcade.Window):
                 self.zoom -= self.zoom_step
                 updated = True
         elif key == arcade.key.UP:
-            if self.lat + self.move_step <= self.lat_max:
-                self.lat += self.move_step
-                updated = True
+            self.lat += move_amount
+            updated = True
         elif key == arcade.key.DOWN:
-            if self.lat - self.move_step >= self.lat_min:
-                self.lat -= self.move_step
-                updated = True
+            self.lat -= move_amount
+            updated = True
         elif key == arcade.key.LEFT:
-            if self.lon - self.move_step >= self.lon_min:
-                self.lon -= self.move_step
-                updated = True
+            self.lon -= move_amount
+            updated = True
         elif key == arcade.key.RIGHT:
-            if self.lon + self.move_step <= self.lon_max:
-                self.lon += self.move_step
-                updated = True
+            self.lon += move_amount
+            updated = True
+
         if updated:
             self.update_map()
 
@@ -271,6 +314,24 @@ class GameView(arcade.Window):
             lon, lat = self.get_coordinates_from_click(x, y)
             if lon is not None and lat is not None:
                 self.search_by_coordinates(lon, lat, x, y)
+        elif button == arcade.MOUSE_BUTTON_RIGHT:
+            lon, lat = self.get_coordinates_from_click(x, y)
+            if lon is not None and lat is not None:
+                self.marker_lon = None
+                self.marker_lat = None
+                self.input_text.text = ""
+                self.object_address = ""
+                self.object_address_without_index = ""
+                self.object_postal_code = ""
+                org = self.search_organization_by_coordinates(lon, lat)
+                if org:
+                    print(f"Найдена организация: {org['name']}")
+                    print(f"Адрес: {org['address']}")
+                    print(f"Время работы: {org['hours']}")
+                    print(f"Расстояние: {org['distance']:.1f} м")
+                else:
+                    print("Организация не найдена в радиусе 50 метров")
+                self.update_map()
 
 
 def main():
