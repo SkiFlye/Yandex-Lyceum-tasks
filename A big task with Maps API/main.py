@@ -159,6 +159,41 @@ class GameView(arcade.Window):
         self.update_address_display()
         self.update_map()
 
+    def get_coordinates_from_click(self, x, y):
+        if not self.background:
+            return None, None
+        map_width = self.background.width
+        map_height = self.background.height
+        offset_x = (self.width - map_width) // 2
+        offset_y = (self.height - map_height) // 2
+        if x < offset_x or x > offset_x + map_width or y < offset_y or y > offset_y + map_height:
+            return None, None
+        map_x = x - offset_x
+        map_y = y - offset_y
+        c = 256 * 2 ** (self.zoom)
+        lon = self.lon + (map_x - map_width / 2) * 360 / c
+        lat = self.lat + (map_y - map_height / 2) * 360 / c
+        return lon, lat
+
+    def search_by_coordinates(self, lon, lat, pixel_x, pixel_y):
+        self.marker_lon, self.marker_lat = lon, lat
+        geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?apikey={GEOCODER_API_KEY}&geocode={lon},{lat}&format=json"
+        response = requests.get(geocoder_request)
+        if not response:
+            print("Ошибка при поиске объекта")
+            return
+        json_response = response.json()
+        found_objects = json_response["response"]["GeoObjectCollection"]["featureMember"]
+        if not found_objects:
+            print("Объект не найден")
+            return
+        toponym = found_objects[0]["GeoObject"]
+        self.object_address_without_index = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+        self.object_postal_code = self.get_postal_code(toponym)
+        self.input_text.text = self.object_address_without_index
+        self.update_address_display()
+        self.update_map()
+
     def on_draw(self):
         self.clear()
         if self.background:
@@ -232,6 +267,10 @@ class GameView(arcade.Window):
 
     def on_mouse_press(self, x, y, button, modifiers):
         self.manager.on_mouse_press(x, y, button, modifiers)
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            lon, lat = self.get_coordinates_from_click(x, y)
+            if lon is not None and lat is not None:
+                self.search_by_coordinates(lon, lat, x, y)
 
 
 def main():
