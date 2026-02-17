@@ -1,0 +1,152 @@
+from flask import Flask, url_for
+
+app = Flask(__name__)
+
+
+@app.route('/')
+def mission():
+    return "Миссия Колонизация Марса"
+
+
+@app.route('/index')
+def motto():
+    return "И на Марсе будут яблони цвести!"
+
+
+@app.route('/promotion')
+def promotion():
+    lines = [
+        "Человечество вырастает из детства.",
+        "Человечеству мала одна планета.",
+        "Мы сделаем обитаемыми безжизненные пока планеты.",
+        "И начнем с Марса!",
+        "Присоединяйся!"]
+    return "</br>".join(lines)
+
+
+@app.route('/image_mars')
+def image_mars():
+    return f'''<!doctype html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <title>Привет, Марс!</title>
+                  </head>
+                  <body>
+                    <h1>Жди нас, Марс!</h1>
+                    <img src="{url_for('static', filename='img/mars.png')}" alt="Марс">
+                    <p>Вот она какая, красная планета!</p>
+                  </body>
+                </html>'''
+
+
+@app.route('/promotion_image')
+def promotion_image():
+    return f'''<!doctype html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+                    <link rel="stylesheet" type="text/css" href="{url_for('static', filename='css/style.css')}">
+                    <title>Реклама Марса</title>
+                  </head>
+                  <body>
+                    <div class="container">
+                        <h1>Жди нас, Марс!</h1>
+                        <img src="{url_for('static', filename='img/mars.png')}" alt="Марс">
+                        <p>Вот она какая, красная планета!</p>
+                        <div class="line1">Человечество вырастает из детства.</div>
+                        <div class="line2">Человечеству мала одна планета.</div>
+                        <div class="line3">Мы сделаем обитаемыми безжизненные пока планеты.</div>
+                        <div class="line4">И начнем с Марса!</div>
+                        <div class="line5">Присоединяйся!</div>
+                    </div>
+                  </body>
+                </html>'''
+
+
+@app.route('/astronaut_selection', methods=['GET', 'POST'])
+def astronaut_selection():
+    professions = [
+        "инженер-исследователь", "пилот", "строитель", "экзобиолог", "врач",
+        "инженер по терраформированию", "климатолог", "специалист по радиационной защите",
+        "астрогеолог", "гляциолог", "инженер жизнеобеспечения", "метеоролог",
+        "оператор марсохода", "киберинженер", "штурман", "пилот дронов"]
+    profession_radios = ""
+    for prof in professions:
+        profession_radios += f'''
+            <div>
+                <input type="radio" id="{prof}" name="profession" value="{prof}">
+                <label for="{prof}">{prof}</label>
+            </div>
+        '''
+    return f'''<!doctype html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <title>Отбор астронавтов</title>
+                    <link rel="stylesheet" type="text/css" href="{url_for('static', filename='css/style.css')}">
+                  </head>
+                  <body>
+                    <h1>Анкета кандидата</h1>
+                    <div class="form-container">
+                        <form method="post">
+                            <div class="form-group">
+                                <label for="surname">Фамилия</label>
+                                <input type="text" id="surname" name="surname">
+                            </div>
+                            <div class="form-group">
+                                <label for="name">Имя</label>
+                                <input type="text" id="name" name="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email">
+                            </div>
+                            <div class="form-group">
+                                <label for="education">Образование</label>
+                                <select id="education" name="education">
+                                    <option value="">Выберите образование</option>
+                                    <option value="high_school">Среднее</option>
+                                    <option value="bachelor">Высшее</option>
+                                    <option value="phd">Учёная степень</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Профессия</label>
+                                <div class="radio-group">
+                                    {profession_radios}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Пол</label>
+                                <div class="radio-group">
+                                    <div>
+                                        <input type="radio" id="male" name="gender" value="male">
+                                        <label for="male">Мужской</label>
+                                    </div>
+                                    <div>
+                                        <input type="radio" id="female" name="gender" value="female">
+                                        <label for="female">Женский</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="motivation">Мотивация</label>
+                                <textarea id="motivation" name="motivation" rows="5"></textarea>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="stay" name="stay" value="yes">
+                                <label for="stay">Готов(а) остаться на Марсе навсегда</label>
+                            </div>
+                            <button type="submit">Отправить</button>
+                        </form>
+                    </div>
+                  </body>
+                </html>'''
+
+
+if __name__ == '__main__':
+    app.run(port=8080, host='127.0.0.1')
