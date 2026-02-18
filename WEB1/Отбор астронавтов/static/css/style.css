@@ -40,7 +40,8 @@ label {
 input[type="text"],
 input[type="email"],
 select,
-textarea {
+textarea,
+input[type="file"] {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -66,3 +67,11 @@ button {
     font-size: 16px;
     cursor: pointer;
     width: 100%;}
+.photo-preview {
+    text-align: center;
+    margin: 20px 0;}
+.photo-preview img {
+    max-width: 300px;
+    max-height: 300px;
+    border: 2px solid #ddd;
+    border-radius: 8px;}

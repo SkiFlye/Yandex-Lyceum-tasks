@@ -1,6 +1,8 @@
-from flask import Flask, url_for
+import os
+from flask import Flask, request, url_for
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/img/uploads'
 
 
 @app.route('/')
@@ -194,11 +196,60 @@ def results(nickname, level, rating):
                         <h1>Результаты отбора</h1>
                         <h2>Претендента на участие в миссии {nickname}:</h2>
                         <div class="alert alert-success mt-3" role="alert">
-                            Поздравляем! Ваш рейтинг после {level} этапа отбора
+                            Поздравляем! Ваш рейтинг после {level} этапа отбора 
                         </div>
                         составляет {rating}!
                         <div class="alert alert-warning" role="alert">
                             Желаем удачи!
+                        </div>
+                    </div>
+                  </body>
+                </html>'''
+
+
+@app.route('/load_photo', methods=['GET', 'POST'])
+def load_photo():
+    if not os.path.exists('static/img/uploads'):
+        os.makedirs('static/img/uploads')
+    uploaded_files = []
+    if os.path.exists('static/img/uploads'):
+        uploaded_files = os.listdir('static/img/uploads')
+    photo_url = url_for('static', filename='img/mars.png')
+    if uploaded_files:
+        latest_file = uploaded_files[0]
+        photo_url = url_for('static', filename=f'img/uploads/{latest_file}')
+    if request.method == 'POST':
+        if 'photo' in request.files:
+            photo = request.files['photo']
+            if photo.filename != '':
+                for file in uploaded_files:
+                    file_path = os.path.join('static/img/uploads', file)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                filename = photo.filename
+                photo.save(os.path.join('static/img/uploads', filename))
+                photo_url = url_for('static', filename=f'img/uploads/{filename}')
+    return f'''<!doctype html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <title>Загрузка фотографии</title>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+                    <link rel="stylesheet" type="text/css" href="{url_for('static', filename='css/style.css')}">
+                  </head>
+                  <body>
+                    <h1>Загрузка фотографии для участия в миссии</h1>
+                    <div class="form-container">
+                        <form method="post" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="photo">Приложите фотографию</label>
+                                <input type="file" id="photo" name="photo" accept="image/*">
+                            </div>
+                            <button type="submit">Отправить</button>
+                        </form>
+                        <div class="photo-preview">
+                            <img src="{photo_url}" alt="Фото" style="max-width: 300px; max-height: 300px; border: 2px solid #ddd; border-radius: 8px;">
                         </div>
                     </div>
                   </body>
