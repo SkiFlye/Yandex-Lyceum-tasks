@@ -148,5 +148,36 @@ def astronaut_selection():
                 </html>'''
 
 
+@app.route('/choice/<planet_name>')
+def choice(planet_name):
+    return f'''<!doctype html>
+                <html lang="en">
+                  <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <title>Ваш выбор</title>
+                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css">
+                  </head>
+                  <body>
+                    <div class="container mt-4">
+                        <h1>Моё предложение: {planet_name}</h1>
+                        <h2 class="mt-3">Эта планета близка к Земле;</h2>
+                        <div class="alert alert-success mt-3" role="alert">
+                            <h3>На ней много необходимых ресурсов;</h3>
+                        </div>
+                        <div class="alert alert-info" role="alert">
+                            <h4>На ней есть вода и атмосфера;</h4>
+                        </div>
+                        <div class="alert alert-warning" role="alert">
+                            <h5>На ней есть небольшое магнитное поле;</h5>
+                        </div>
+                        <div class="alert alert-danger" role="alert">
+                            <h6>Наконец, она просто красива!</h6>
+                        </div>
+                    </div>
+                  </body>
+                </html>'''
+
+
 if __name__ == '__main__':
     app.run(port=8080, host='127.0.0.1')
