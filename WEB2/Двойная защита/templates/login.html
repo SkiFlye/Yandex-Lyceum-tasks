@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+    <style>
+        .emergency-container {
+            position: relative;
+            padding-left: 120px;
+            min-height: 120px;
+        }
+        .emergency-container::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100px;
+            height: 100px;
+            background-image: url('/static/img/emergency_logo.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 1px solid #ccc;
+        }
+        .btn-blue {
+            background-color: blue;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+
+    <div class="emergency-container">
+        <h2>Аварийный доступ</h2>
+        <form action="" method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.astronaut_id.label }}<br>
+                {{ form.astronaut_id(class="form-control") }}<br>
+                {% for error in form.astronaut_id.errors %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.astronaut_password.label }}<br>
+                {{ form.astronaut_password(class="form-control", type="password") }}<br>
+                {% for error in form.astronaut_password.errors %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.captain_id.label }}<br>
+                {{ form.captain_id(class="form-control") }}<br>
+                {% for error in form.captain_id.errors %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.captain_token.label }}<br>
+                {{ form.captain_token(class="form-control", type="password") }}<br>
+                {% for error in form.captain_token.errors %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit(type="submit", class="btn-blue") }}</p>
+        </form>
+    </div>
+{% endblock %}
