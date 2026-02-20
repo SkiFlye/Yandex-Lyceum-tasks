@@ -1,0 +1,41 @@
+from flask import Flask, render_template
+
+app = Flask(__name__)
+
+@app.route('/')
+def index_root():
+    return render_template('base.html', title='Главная')
+
+@app.route('/index/<title>')
+def index_title(title):
+    return render_template('base.html', title=title)
+
+@app.route('/training/<prof>')
+def training(prof):
+    return render_template('training.html', title='Тренировки', prof=prof)
+
+@app.route('/list_prof/<list_type>')
+def list_prof(list_type):
+    professions = ['инженер', 'пилот', 'строитель', 'биолог', 'врач']
+    return render_template('list_prof.html',
+                         title='Список профессий',
+                         professions=professions,
+                         list_type=list_type)
+
+@app.route('/answer')
+@app.route('/auto_answer')
+def auto_answer():
+    user_data = {
+        'title': 'Анкета',
+        'surname': 'Иванов',
+        'name': 'Иван',
+        'education': 'высшее',
+        'profession': 'инженер',
+        'sex': 'мужской',
+        'motivation': 'Хочу колонизировать Марс',
+        'ready': 'true'
+    }
+    return render_template('auto_answer.html', **user_data)
+
+if __name__ == '__main__':
+    app.run(port=8080)
