@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Список профессий для миссии на Марс</h2>
+
+    {% if list_type == 'ol' %}
+        <ol>
+            {% for prof in professions %}
+                <li>{{ prof }}</li>
+            {% endfor %}
+        </ol>
+    {% elif list_type == 'ul' %}
+        <ul>
+            {% for prof in professions %}
+                <li>{{ prof }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            Неверный параметр. Используйте "ol" для нумерованного списка или "ul" для маркированного списка.
+        </div>
+    {% endif %}
+{% endblock %}

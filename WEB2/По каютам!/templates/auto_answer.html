@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Результаты анкеты</h2>
+    <div class="answer-form">
+        <p><strong>Фамилия:</strong> {{ surname }}</p>
+        <p><strong>Имя:</strong> {{ name }}</p>
+        <p><strong>Образование:</strong> {{ education }}</p>
+        <p><strong>Профессия:</strong> {{ profession }}</p>
+        <p><strong>Пол:</strong> {{ sex }}</p>
+        <p><strong>Мотивация:</strong> {{ motivation }}</p>
+        <p><strong>Готовы остаться на Марсе?:</strong> {% if ready == 'true' %}Да{% else %}Нет{% endif %}</p>
+    </div>
+{% endblock %}
