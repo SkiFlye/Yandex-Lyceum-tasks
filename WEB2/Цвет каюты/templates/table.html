@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Оформление каюты</h2>
+    <table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse;">
+        <tr>
+            <th>Цвет стен</th>
+            <th>Эмблема</th>
+        </tr>
+        <tr>
+            <td style="background-color: {{ color }}; width: 200px; height: 200px;"></td>
+            <td>
+                {% if martian_type == 'child' %}
+                    <img src="/static/img/child_martian.png" alt="Марсианин-ребенок" style="width: 200px; height: 200px;">
+                {% else %}
+                    <img src="/static/img/adult_martian.png" alt="Марсианин-взрослый" style="width: 200px; height: 200px;">
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+{% endblock %}
