@@ -1,0 +1,23 @@
+h4 {
+    color: #336699;
+    padding-left: 20px;
+}
+
+.emergency-container {
+    position: relative;
+    padding-left: 120px;
+    min-height: 120px;
+}
+
+.emergency-container::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100px;
+    height: 100px;
+    background-image: url('/static/img/emblem.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 1px solid #ccc;}

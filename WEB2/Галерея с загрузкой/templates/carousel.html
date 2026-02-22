@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Пейзажи Марса</h2>
+    <div class="upload-form mb-4">
+        Добавить картинку
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <input type="file" name="file" class="form-control" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Загрузить</button>
+        </form>
+    </div>
+    {% if images %}
+    <div id="marsCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            {% for i in range(images|length) %}
+            <button type="button" data-bs-target="#marsCarousel" data-bs-slide-to="{{ i }}"
+                    class="{{ 'active' if i == 0 else '' }}"
+                    aria-current="{{ 'true' if i == 0 else 'false' }}"
+                    aria-label="Slide {{ i + 1 }}"></button>
+            {% endfor %}
+        </div>
+        <div class="carousel-inner">
+            {% for image in images %}
+            <div class="carousel-item {{ 'active' if loop.first else '' }}">
+                <img src="{{ url_for('static', filename='img/carousel/' + image) }}"
+                     class="d-block w-100"
+                     alt="Марс {{ loop.index }}"
+                     style="max-height: 500px; object-fit: cover;">
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#marsCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#marsCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+    </div>
+    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
