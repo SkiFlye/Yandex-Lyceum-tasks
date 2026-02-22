@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Ридли",
+        "surname": "Скотт",
+        "photo": "/static/img/crew/1.png",
+        "professions": ["Капитан корабля", "пилот"]
+    },
+    {
+        "name": "Энди",
+        "surname": "Уир",
+        "photo": "/static/img/crew/2.png",
+        "professions": ["биолог", "врач"]
+    },
+    {
+        "name": "Марк",
+        "surname": "Уотни",
+        "photo": "/static/img/crew/3.png",
+        "professions": ["механик", "инженер'"]
+    },
+    {
+        "name": "Венката",
+        "surname": "Капур",
+        "photo": "/static/img/crew/4.png",
+        "professions": ["биолог", "геолог"]
+    },
+    {
+        "name": "Тедди",
+        "surname": "Сандрес",
+        "photo": "/static/img/crew/5.png",
+        "professions": ["программист", "техник"]
+    }
+]
