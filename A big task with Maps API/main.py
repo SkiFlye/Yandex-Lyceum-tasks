@@ -154,6 +154,24 @@ class GameView(arcade.Window):
         pos = toponym["Point"]["pos"]
         self.lon, self.lat = map(float, pos.split())
         self.marker_lon, self.marker_lat = self.lon, self.lat
+        if "boundedBy" in toponym:
+            envelope = toponym["boundedBy"]["Envelope"]
+            lower_corner = list(map(float, envelope["lowerCorner"].split()))
+            upper_corner = list(map(float, envelope["upperCorner"].split()))
+            lon_span = abs(upper_corner[0] - lower_corner[0])
+            lat_span = abs(upper_corner[1] - lower_corner[1])
+            max_span = max(lon_span, lat_span)
+            if max_span < 0.001:
+                self.zoom = 18
+            elif max_span < 0.01:
+                self.zoom = 16
+            elif max_span < 0.1:
+                self.zoom = 14
+            elif max_span < 1:
+                self.zoom = 10
+            else:
+                self.zoom = 8
+            self.zoom = max(self.zoom_min, min(self.zoom_max, self.zoom))
         self.object_address_without_index = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
         self.object_postal_code = self.get_postal_code(toponym)
         self.update_address_display()
@@ -170,10 +188,14 @@ class GameView(arcade.Window):
             return None, None
         map_x = x - offset_x
         map_y = y - offset_y
-        c = 256 * 2 ** (self.zoom)
-        lon = self.lon + (map_x - map_width / 2) * 360 / c
-        lat = self.lat + (map_y - map_height / 2) * 360 / c
-        return lon, lat
+        map_center_x = map_width / 2
+        map_center_y = map_height / 2
+        dx = map_x - map_center_x
+        dy = map_center_y - map_y
+        coord_to_geo = 0.0000428
+        lon = self.lon + dx * coord_to_geo * (2 ** (15 - self.zoom))
+        lat = self.lat - dy * coord_to_geo * math.cos(math.radians(self.lat)) * (2 ** (15 - self.zoom))
+        return round(lon, 6), round(lat, 6)
 
     def search_by_coordinates(self, lon, lat, pixel_x, pixel_y):
         self.marker_lon, self.marker_lat = lon, lat
@@ -276,7 +298,7 @@ class GameView(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         updated = False
-        move_amount = 0.5 / (2 ** self.zoom)
+        move_amount = 2.0 / (2 ** (self.zoom - 1))
 
         if key == arcade.key.TAB:
             self.toggle_dark_theme()
