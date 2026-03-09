@@ -219,46 +219,49 @@ class GameView(arcade.Window):
     def search_organization_by_coordinates(self, lon, lat):
         search_api_server = "https://search-maps.yandex.ru/v1/"
         api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
+        self.marker_lon = lon
+        self.marker_lat = lat
+        zoom_to_radius = {
+            1: 10000, 2: 6000, 3: 4000, 4: 2000, 5: 1000,
+            6: 600, 7: 400, 8: 300, 9: 200, 10: 160,
+            11: 120, 12: 100, 13: 80, 14: 60, 15: 50,
+            16: 40, 17: 30, 18: 20, 19: 16, 20: 10}
+        search_radius = zoom_to_radius.get(self.zoom, 100)
         search_params = {
             "apikey": api_key,
             "text": "организация",
             "lang": "ru_RU",
             "ll": f"{lon},{lat}",
             "type": "biz",
-            "results": 1
-        }
+            "results": 1,
+            "spn": f"{search_radius / 111000.0},{search_radius / 111000.0}"}
         response = requests.get(search_api_server, params=search_params)
         if not response:
             return None
         json_response = response.json()
         if not json_response.get("features"):
             return None
-
         organization = json_response["features"][0]
         org_coords = organization["geometry"]["coordinates"]
         org_lon, org_lat = org_coords
-
         lat_mid = (lat + org_lat) / 2
         lat_km_per_degree = 111.0
         lon_km_per_degree = 111.0 * math.cos(math.radians(lat_mid))
         lat_diff_km = (org_lat - lat) * lat_km_per_degree
         lon_diff_km = (org_lon - lon) * lon_km_per_degree
         distance_m = math.sqrt(lat_diff_km ** 2 + lon_diff_km ** 2) * 1000
-
-        if distance_m > 50:
+        if distance_m > search_radius:
             return None
-
         org_name = organization["properties"]["CompanyMetaData"]["name"]
         org_address = organization["properties"]["CompanyMetaData"]["address"]
         hours = organization["properties"]["CompanyMetaData"].get("Hours", {}).get("text", "Время работы не указано")
-
         return {
             "name": org_name,
             "address": org_address,
             "hours": hours,
             "distance": distance_m,
-            "coordinates": (org_lon, org_lat)
-        }
+            "coordinates": (org_lon, org_lat),
+            "search_radius": search_radius}
 
     def on_draw(self):
         self.clear()
@@ -299,7 +302,6 @@ class GameView(arcade.Window):
     def on_key_press(self, key, modifiers):
         updated = False
         move_amount = 2.0 / (2 ** (self.zoom - 1))
-
         if key == arcade.key.TAB:
             self.toggle_dark_theme()
             updated = True
@@ -326,7 +328,6 @@ class GameView(arcade.Window):
         elif key == arcade.key.RIGHT:
             self.lon += move_amount
             updated = True
-
         if updated:
             self.update_map()
 
@@ -351,8 +352,15 @@ class GameView(arcade.Window):
                     print(f"Адрес: {org['address']}")
                     print(f"Время работы: {org['hours']}")
                     print(f"Расстояние: {org['distance']:.1f} м")
+                    print(f"Радиус поиска: {org['search_radius']} м")
                 else:
-                    print("Организация не найдена в радиусе 50 метров")
+                    zoom_to_radius = {
+                        1: 10000, 2: 6000, 3: 4000, 4: 2000, 5: 1000,
+                        6: 600, 7: 400, 8: 300, 9: 200, 10: 160,
+                        11: 120, 12: 100, 13: 80, 14: 60, 15: 50,
+                        16: 40, 17: 30, 18: 20, 19: 16, 20: 10}
+                    radius = zoom_to_radius.get(self.zoom, 100)
+                    print(f"Организация не найдена в радиусе {radius} м")
                 self.update_map()
 
 
