@@ -9,6 +9,7 @@ from data.login_form import LoginForm
 from data.add_job import AddJobForm
 from data.register import RegisterForm
 from data.department_form import DepartmentForm
+from data.categories import Category
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -71,6 +72,9 @@ def register():
 @login_required
 def addjob():
     form = AddJobForm()
+    db_sess = db_session.create_session()
+    categories = db_sess.query(Category).all()
+    form.category.choices = [(c.id, c.name) for c in categories]
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         job = Jobs()
@@ -79,6 +83,8 @@ def addjob():
         job.work_size = int(form.work_size.data)
         job.collaborators = form.collaborators.data
         job.is_finished = form.is_finished.data
+        selected_categories = db_sess.query(Category).filter(Category.id.in_(form.category.data)).all()
+        job.categories = selected_categories
         db_sess.add(job)
         db_sess.commit()
         return redirect('/')
@@ -91,6 +97,8 @@ def edit_job(job_id):
     form = AddJobForm()
     db_sess = db_session.create_session()
     job = db_sess.query(Jobs).filter(Jobs.id == job_id).first()
+    categories = db_sess.query(Category).all()
+    form.category.choices = [(c.id, c.name) for c in categories]
     if not job:
         return render_template('error.html', message='Job not found')
     if current_user.id != 1 and job.team_leader != current_user.id:
@@ -100,12 +108,15 @@ def edit_job(job_id):
         job.work_size = int(form.work_size.data)
         job.collaborators = form.collaborators.data
         job.is_finished = form.is_finished.data
+        selected_categories = db_sess.query(Category).filter(Category.id.in_(form.category.data)).all()
+        job.categories = selected_categories
         db_sess.commit()
         return redirect('/')
     form.job.data = job.job
     form.work_size.data = job.work_size
     form.collaborators.data = job.collaborators
     form.is_finished.data = job.is_finished
+    form.category.data = [c.id for c in job.categories]
     return render_template('addjob.html', title='Editing a Job', form=form)
 
 

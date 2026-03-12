@@ -19,6 +19,8 @@ class User(SqlAlchemyBase, UserMixin):
     email = sa.Column(sa.String, index=True, unique=True, nullable=True)
     hashed_password = sa.Column(sa.String, nullable=True)
     modifed_date = sa.Column(sa.DateTime, default=datetime.datetime.now)
+    jobs = orm.relationship("Jobs", back_populates="user")
+    departments = orm.relationship("Department", back_populates="user")
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
@@ -27,4 +29,4 @@ class User(SqlAlchemyBase, UserMixin):
         return check_password_hash(self.hashed_password, password)
 
     def __repr__(self):
-        return f'<Colonist> {self.id} {self.surname} {self.name}'
+        return f"<Colonist> {self.id} {self.surname} {self.name}"

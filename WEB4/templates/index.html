@@ -22,6 +22,7 @@
             <th>Team leader</th>
             <th>Duration</th>
             <th>List of collaborators</th>
+            <th>Categories</th>
             <th>Is finished</th>
         </tr>
     </thead>
@@ -31,6 +32,11 @@
             <td>{{ names[job.team_leader][0] }} {{ names[job.team_leader][1] }}</td>
             <td>{{ job.work_size }} hours</td>
             <td>{{ job.collaborators }}</td>
+            <td>
+                {% for category in job.categories %}
+                    {{ category.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
             <td>{% if job.is_finished %}Finished{% else %}Is not finished{% endif %}</td>
         </tr>
     </tbody>
