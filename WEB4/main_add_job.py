@@ -72,15 +72,53 @@ def addjob():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         job = Jobs()
-        job.job = form.job_title.data
-        job.team_leader = int(form.leader_id.data)
-        job.work_size = int(form.duration.data)
-        job.collaborators = form.team_members.data
-        job.is_finished = form.completed.data
+        job.job = form.job.data
+        job.team_leader = current_user.id
+        job.work_size = int(form.work_size.data)
+        job.collaborators = form.collaborators.data
+        job.is_finished = form.is_finished.data
         db_sess.add(job)
         db_sess.commit()
         return redirect('/')
     return render_template('addjob.html', title='Adding a Job', form=form)
+
+
+@app.route('/edit_job/<int:job_id>', methods=['GET', 'POST'])
+@login_required
+def edit_job(job_id):
+    form = AddJobForm()
+    db_sess = db_session.create_session()
+    job = db_sess.query(Jobs).filter(Jobs.id == job_id).first()
+    if not job:
+        return render_template('error.html', message='Job not found')
+    if current_user.id != 1 and job.team_leader != current_user.id:
+        return render_template('error.html', message='You do not have permission to edit this job')
+    if form.validate_on_submit():
+        job.job = form.job.data
+        job.work_size = int(form.work_size.data)
+        job.collaborators = form.collaborators.data
+        job.is_finished = form.is_finished.data
+        db_sess.commit()
+        return redirect('/')
+    form.job.data = job.job
+    form.work_size.data = job.work_size
+    form.collaborators.data = job.collaborators
+    form.is_finished.data = job.is_finished
+    return render_template('addjob.html', title='Editing a Job', form=form)
+
+
+@app.route('/delete_job/<int:job_id>', methods=['GET'])
+@login_required
+def delete_job(job_id):
+    db_sess = db_session.create_session()
+    job = db_sess.query(Jobs).filter(Jobs.id == job_id).first()
+    if not job:
+        return render_template('error.html', message='Job not found')
+    if current_user.id != 1 and job.team_leader != current_user.id:
+        return render_template('error.html', message='You do not have permission to delete this job')
+    db_sess.delete(job)
+    db_sess.commit()
+    return redirect('/')
 
 
 @app.route("/")
