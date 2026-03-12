@@ -4,9 +4,11 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from data import db_session
 from data.jobs import Jobs
 from data.users import User
+from data.departments import Department
 from data.login_form import LoginForm
 from data.add_job import AddJobForm
 from data.register import RegisterForm
+from data.department_form import DepartmentForm
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -119,6 +121,68 @@ def delete_job(job_id):
     db_sess.delete(job)
     db_sess.commit()
     return redirect('/')
+
+
+@app.route('/departments')
+def departments():
+    db_sess = db_session.create_session()
+    departments = db_sess.query(Department).all()
+    users = db_sess.query(User).all()
+    names = {user.id: (user.surname, user.name) for user in users}
+    return render_template("departments.html", departments=departments, names=names, title='Departments log')
+
+
+@app.route('/add_department', methods=['GET', 'POST'])
+@login_required
+def add_department():
+    form = DepartmentForm()
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        department = Department()
+        department.title = form.title.data
+        department.chief = current_user.id
+        department.members = form.members.data
+        department.email = form.email.data
+        db_sess.add(department)
+        db_sess.commit()
+        return redirect('/departments')
+    return render_template('department_form.html', title='Adding a Department', form=form)
+
+
+@app.route('/edit_department/<int:department_id>', methods=['GET', 'POST'])
+@login_required
+def edit_department(department_id):
+    form = DepartmentForm()
+    db_sess = db_session.create_session()
+    department = db_sess.query(Department).filter(Department.id == department_id).first()
+    if not department:
+        return render_template('error.html', message='Department not found')
+    if current_user.id != 1 and department.chief != current_user.id:
+        return render_template('error.html', message='You do not have permission to edit this department')
+    if form.validate_on_submit():
+        department.title = form.title.data
+        department.members = form.members.data
+        department.email = form.email.data
+        db_sess.commit()
+        return redirect('/departments')
+    form.title.data = department.title
+    form.members.data = department.members
+    form.email.data = department.email
+    return render_template('department_form.html', title='Editing a Department', form=form)
+
+
+@app.route('/delete_department/<int:department_id>', methods=['GET'])
+@login_required
+def delete_department(department_id):
+    db_sess = db_session.create_session()
+    department = db_sess.query(Department).filter(Department.id == department_id).first()
+    if not department:
+        return render_template('error.html', message='Department not found')
+    if current_user.id != 1 and department.chief != current_user.id:
+        return render_template('error.html', message='You do not have permission to delete this department')
+    db_sess.delete(department)
+    db_sess.commit()
+    return redirect('/departments')
 
 
 @app.route("/")
