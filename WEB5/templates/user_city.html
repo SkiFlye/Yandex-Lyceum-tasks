@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Nostalgy</h1>
+    <h2>{{ user.surname }} {{ user.name }}</h2>
+    <h3>Hometown {{ user.city_from }}</h3>
+
+    <div class="mt-4">
+        <img src="https://static-maps.yandex.ru/1.x/?ll=37.61778,55.75583&z=12&size=650,450&l=sat"
+             alt="Карта {{ user.city_from }}"
+             class="img-fluid rounded shadow"
+             style="width: 100%; max-width: 800px;">
+    </div>
+</div>
+
+<script src="https://api-maps.yandex.ru/2.1/?apikey=8013b162-6b42-4997-9691-77b7074026e0&lang=ru_RU" type="text/javascript"></script>
+<script type="text/javascript">
+    ymaps.ready(function() {
+        var cityName = "{{ user.city_from }}";
+
+        var knownCities = {
+            "Москва": [37.61778, 55.75583],
+            "Санкт-Петербург": [30.31413, 59.93863],
+            "Новосибирск": [82.93414, 55.0302],
+            "Екатеринбург": [60.6122, 56.8389],
+            "Казань": [49.1054, 55.7887],
+            "Сочи": [39.7203, 43.5855],
+            "Великий Новгород": [31.2696, 58.5213],
+            "Псков": [28.3344, 57.8192],
+            "Смоленск": [32.0405, 54.7818],
+            "Лондон": [-0.1278, 51.5074],
+            "Париж": [2.3522, 48.8566],
+            "Берлин": [13.4050, 52.5200],
+            "Рим": [12.4964, 41.9028],
+            "Мадрид": [-3.7038, 40.4168],
+            "Вашингтон": [-77.0369, 38.9072],
+            "Токио": [139.6917, 35.6895],
+            "Пекин": [116.4074, 39.9042]
+        };
+
+        if (knownCities[cityName]) {
+            var coords = knownCities[cityName];
+            var img = document.querySelector('img');
+            img.src = 'https://static-maps.yandex.ru/1.x/?ll=' + coords[0] + ',' + coords[1] + '&z=12&size=650,450&l=sat';
+        } else {
+            var searchName = cityName + ", Россия";
+
+            ymaps.geocode(searchName, {
+                results: 1,
+                kind: 'locality'
+            }).then(function (res) {
+                var firstGeoObject = res.geoObjects.get(0);
+                if (firstGeoObject) {
+                    var coords = firstGeoObject.geometry.getCoordinates();
+                    var img = document.querySelector('img');
+                    img.src = 'https://static-maps.yandex.ru/1.x/?ll=' + coords[0] + ',' + coords[1] + '&z=12&size=650,450&l=sat';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

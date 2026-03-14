@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Departments log</h1>
+
+<div class="mb-3">
+    {% if current_user.is_authenticated %}
+        <a href="/add_department" class="btn btn-secondary">Add department</a>
+    {% endif %}
+</div>
+
+{% for department in departments %}
+<div class="d-flex align-items-center mb-2">
+    <h3 class="mb-0 mr-3">Department # {{ department.id }}</h3>
+    {% if current_user.is_authenticated and (current_user.id == 1 or current_user.id == department.chief) %}
+        <div>
+            <a href="/edit_department/{{ department.id }}" class="btn btn-warning btn-sm mr-2">Edit</a>
+            <a href="/delete_department/{{ department.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+        </div>
+    {% endif %}
+</div>
+
+<table class="table table-bordered">
+    <thead class="table-secondary">
+        <tr>
+            <th>Title of department</th>
+            <th>Chief</th>
+            <th>Members</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="table-primary">
+            <td>{{ department.title }}</td>
+            <td>
+                {% if names and department.chief in names %}
+                    {{ names[department.chief][0] }} {{ names[department.chief][1] }}
+                {% else %}
+                    Unknown (ID: {{ department.chief }})
+                {% endif %}
+            </td>
+            <td>{{ department.members }}</td>
+            <td>{{ department.email }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endfor %}
+
+{% if not departments %}
+    <div class="alert alert-info">No departments found.</div>
+{% endif %}
+{% endblock %}
