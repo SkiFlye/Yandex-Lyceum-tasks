@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Works log</h1>
+{% if current_user.is_authenticated %}
+    <a href="/addjob" class="btn btn-secondary mb-3">Add job</a>
+{% endif %}
+{% for job in jobs %}
+<div class="d-flex align-items-center mb-2">
+    <h3 class="mb-0 mr-3">Action # {{ job.id }}</h3>
+    {% if current_user.is_authenticated and (current_user.id == 1 or current_user.id == job.team_leader) %}
+        <div>
+            <a href="/edit_job/{{ job.id }}" class="btn btn-warning btn-sm mr-2">Edit</a>
+            <a href="/delete_job/{{ job.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</a>
+        </div>
+    {% endif %}
+</div>
+<table class="table table-bordered">
+    <thead class="table-secondary">
+        <tr>
+            <th>Title of activity</th>
+            <th>Team leader</th>
+            <th>Duration</th>
+            <th>List of collaborators</th>
+            <th>Categories</th>
+            <th>Is finished</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="table-primary">
+            <td>{{ job.job }}</td>
+            <td>{{ names[job.team_leader][0] }} {{ names[job.team_leader][1] }}</td>
+            <td>{{ job.work_size }} hours</td>
+            <td>{{ job.collaborators }}</td>
+            <td>
+                {% for category in job.categories %}
+                    {{ category.name }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            <td>{% if job.is_finished %}Finished{% else %}Is not finished{% endif %}</td>
+        </tr>
+    </tbody>
+</table>
+{% endfor %}
+{% endblock %}
