@@ -3,7 +3,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from .db_session import SqlAlchemyBase
 from sqlalchemy_serializer import SerializerMixin
-from .users import User  # Явный импорт класса User
+from .users import User
 
 
 class Jobs(SqlAlchemyBase, SerializerMixin):
@@ -18,6 +18,4 @@ class Jobs(SqlAlchemyBase, SerializerMixin):
     end_date = sa.Column(sa.DateTime, nullable=True)
     is_finished = sa.Column(sa.Boolean, default=False)
     category = sa.Column(sa.String, nullable=True)
-
-    # Используем импортированный класс
     user = orm.relationship(User)

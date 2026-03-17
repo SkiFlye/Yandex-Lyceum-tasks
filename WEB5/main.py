@@ -1,6 +1,6 @@
 from flask import Flask
 from data import db_session
-from WEB5.data import jobs_api
+from data import jobs_api
 from data import users_api
 
 app = Flask(__name__)
