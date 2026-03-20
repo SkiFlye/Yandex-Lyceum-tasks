@@ -20,6 +20,10 @@ class User(SqlAlchemyBase, SerializerMixin):
     modified_date = sa.Column(sa.DateTime, default=datetime.datetime.now)
     city_from = sa.Column(sa.String, nullable=True)
 
+    @property
+    def is_active(self):
+        return True
+
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
 
@@ -28,3 +32,6 @@ class User(SqlAlchemyBase, SerializerMixin):
 
     def __repr__(self):
         return f"<Colonist> {self.id} {self.surname} {self.name}"
+
+    def get_id(self):
+        return str(self.id)
