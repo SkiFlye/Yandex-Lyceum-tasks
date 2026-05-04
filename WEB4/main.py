@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 from data import db_session
@@ -10,12 +10,16 @@ from data.add_job import AddJobForm
 from data.register import RegisterForm
 from data.department_form import DepartmentForm
 from data.categories import Category
+import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+WAF_URL = "http://127.0.0.1:8080"
+API_KEY = "C_hMdJIDzOv9YGWx0JSG2s1hMiTZZQyXjeeC8k90YnI"
 
 
 @login_manager.user_loader
@@ -196,13 +200,27 @@ def delete_department(department_id):
     return redirect('/departments')
 
 
-@app.route("/")
-def index():
-    db_sess = db_session.create_session()
-    jobs = db_sess.query(Jobs).all()
-    users = db_sess.query(User).all()
-    names = {user.id: (user.surname, user.name) for user in users}
-    return render_template("index.html", jobs=jobs, names=names, title='Work log')
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def catch_all(path):
+    print(f"🔍 Запрос к WAF: {path}")
+    if path == '':
+        db_sess = db_session.create_session()
+        jobs = db_sess.query(Jobs).all()
+        users = db_sess.query(User).all()
+        names = {user.id: (user.surname, user.name) for user in users}
+        return render_template("index.html", jobs=jobs, names=names, title='Work log')
+    try:
+        response = requests.request(
+            method=request.method,
+            url=f"{WAF_URL}/{path}",
+            headers={"X-API-Key": API_KEY},
+            params=request.args,
+            data=request.get_data()
+        )
+        return response.content, response.status_code
+    except requests.exceptions.ConnectionError:
+        return "WAF сервис недоступен", 503
 
 
 @app.route('/logout')
@@ -214,7 +232,7 @@ def logout():
 
 def main():
     db_session.global_init("db/mars_explorer.db")
-    app.run(port=8080, host='127.0.0.1')
+    app.run(port=5001, host='127.0.0.1')
 
 
 if __name__ == '__main__':
