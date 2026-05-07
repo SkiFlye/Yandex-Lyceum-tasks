@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 from data import db_session
+from waf_check import waf_check
 from data.jobs import Jobs
 from data.users import User
 from data.departments import Department
@@ -25,10 +26,11 @@ API_KEY = "C_hMdJIDzOv9YGWx0JSG2s1hMiTZZQyXjeeC8k90YnI"
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    return db_sess.get(User, user_id)
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@waf_check(WAF_URL, API_KEY)
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -44,6 +46,7 @@ def login():
 
 
 @app.route('/register', methods=['GET', 'POST'])
+@waf_check(WAF_URL, API_KEY)
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -74,6 +77,7 @@ def register():
 
 @app.route('/addjob', methods=['GET', 'POST'])
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def addjob():
     form = AddJobForm()
     db_sess = db_session.create_session()
@@ -97,6 +101,7 @@ def addjob():
 
 @app.route('/edit_job/<int:job_id>', methods=['GET', 'POST'])
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def edit_job(job_id):
     form = AddJobForm()
     db_sess = db_session.create_session()
@@ -126,6 +131,7 @@ def edit_job(job_id):
 
 @app.route('/delete_job/<int:job_id>', methods=['GET'])
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def delete_job(job_id):
     db_sess = db_session.create_session()
     job = db_sess.query(Jobs).filter(Jobs.id == job_id).first()
@@ -139,6 +145,7 @@ def delete_job(job_id):
 
 
 @app.route('/departments')
+@waf_check(WAF_URL, API_KEY)
 def departments():
     db_sess = db_session.create_session()
     departments = db_sess.query(Department).all()
@@ -149,6 +156,7 @@ def departments():
 
 @app.route('/add_department', methods=['GET', 'POST'])
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def add_department():
     form = DepartmentForm()
     if form.validate_on_submit():
@@ -166,6 +174,7 @@ def add_department():
 
 @app.route('/edit_department/<int:department_id>', methods=['GET', 'POST'])
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def edit_department(department_id):
     form = DepartmentForm()
     db_sess = db_session.create_session()
@@ -188,6 +197,7 @@ def edit_department(department_id):
 
 @app.route('/delete_department/<int:department_id>', methods=['GET'])
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def delete_department(department_id):
     db_sess = db_session.create_session()
     department = db_sess.query(Department).filter(Department.id == department_id).first()
@@ -200,31 +210,19 @@ def delete_department(department_id):
     return redirect('/departments')
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def catch_all(path):
-    print(f"🔍 Запрос к WAF: {path}")
-    if path == '':
-        db_sess = db_session.create_session()
-        jobs = db_sess.query(Jobs).all()
-        users = db_sess.query(User).all()
-        names = {user.id: (user.surname, user.name) for user in users}
-        return render_template("index.html", jobs=jobs, names=names, title='Work log')
-    try:
-        response = requests.request(
-            method=request.method,
-            url=f"{WAF_URL}/{path}",
-            headers={"X-API-Key": API_KEY},
-            params=request.args,
-            data=request.get_data()
-        )
-        return response.content, response.status_code
-    except requests.exceptions.ConnectionError:
-        return "WAF сервис недоступен", 503
+@app.route('/')
+@waf_check(WAF_URL, API_KEY)
+def index():
+    db_sess = db_session.create_session()
+    jobs = db_sess.query(Jobs).all()
+    users = db_sess.query(User).all()
+    names = {user.id: (user.surname, user.name) for user in users}
+    return render_template("index.html", jobs=jobs, names=names, title='Work log')
 
 
 @app.route('/logout')
 @login_required
+@waf_check(WAF_URL, API_KEY)
 def logout():
     logout_user()
     return redirect("/")
