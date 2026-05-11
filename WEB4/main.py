@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
 from data import db_session
@@ -11,7 +11,6 @@ from data.add_job import AddJobForm
 from data.register import RegisterForm
 from data.department_form import DepartmentForm
 from data.categories import Category
-import requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -19,7 +18,7 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-WAF_URL = "http://127.0.0.1:8080"
+WAF_URL = "https://waf-service--matveynikiforof.replit.app/"
 API_KEY = "C_hMdJIDzOv9YGWx0JSG2s1hMiTZZQyXjeeC8k90YnI"
 
 
@@ -45,7 +44,7 @@ def login():
     return render_template('login.html', title='Authorization', form=form)
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @waf_check(WAF_URL, API_KEY)
 def register():
     form = RegisterForm()
@@ -127,6 +126,13 @@ def edit_job(job_id):
     form.is_finished.data = job.is_finished
     form.category.data = [c.id for c in job.categories]
     return render_template('addjob.html', title='Editing a Job', form=form)
+
+
+@app.route('/api/delete-test', methods=['DELETE'])
+@waf_check(WAF_URL, API_KEY)
+def delete_test():
+    print(f"🎯 delete_test: параметры = {dict(request.args)}")
+    return jsonify({"status": "deleted", "params": dict(request.args)})
 
 
 @app.route('/delete_job/<int:job_id>', methods=['GET'])
@@ -235,3 +241,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# https://61a56de7-45be-4f70-9f0c-619c5ca791b6-00-1un211isne5tm.sisko.replit.dev:5000
