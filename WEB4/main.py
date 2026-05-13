@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, request, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from waitress import serve
 
 from data import db_session
 from waf_check import waf_check
@@ -236,10 +237,8 @@ def logout():
 
 def main():
     db_session.global_init("db/mars_explorer.db")
-    app.run(port=5001, host='127.0.0.1')
+    serve(app, host='127.0.0.1', port=5001)
 
 
 if __name__ == '__main__':
     main()
-
-# https://61a56de7-45be-4f70-9f0c-619c5ca791b6-00-1un211isne5tm.sisko.replit.dev:5000
