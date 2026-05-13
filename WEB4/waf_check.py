@@ -29,7 +29,7 @@ def waf_check(waf_url, api_key):
                 return f(*args, **kwargs)
 
             except Exception as e:
-                print(f"❌ Ошибка WAF: {e}")
+                print(f"Ошибка WAF: {e}")
                 return f(*args, **kwargs)
 
         return decorated_function
