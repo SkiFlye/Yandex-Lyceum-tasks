@@ -19,7 +19,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 WAF_URL = "https://waf-service--matveynikiforof.replit.app/"
-API_KEY = ""
+API_KEY = "C_hMdJIDzOv9YGWx0JSG2s1hMiTZZQyXjeeC8k90YnI"
 
 
 @login_manager.user_loader
